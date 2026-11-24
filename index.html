@@ -16,7 +16,20 @@
   *{box-sizing:border-box}
   html{font-size:20px}
   body{margin:0;background:#fff;color:var(--texto);font-family:Arial,"Helvetica Neue",system-ui,sans-serif;line-height:1.5}
-  .wrap{max-width:1000px;margin:0 auto;padding:28px 24px 56px}
+  .wrap{max-width:1280px;margin:0 auto;padding:24px 28px 48px}
+  .layout{display:block}
+  .panel{min-width:0}
+  .vacio-panel{border:1px dashed var(--linea);background:#fff;text-align:center;padding:48px 24px;color:var(--suave);font-size:.9rem}
+  .vacio-panel .tag{display:block;margin-bottom:8px}
+  details.res-texto summary{cursor:pointer;font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--suave);padding:6px 0}
+  @media (min-width:1000px){
+    .layout{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:28px;align-items:start}
+    .entrada{position:sticky;top:16px;margin-bottom:0}
+    textarea{min-height:320px;max-height:70vh}
+    header{margin-bottom:18px;padding-bottom:14px}
+    h1{font-size:1.8rem}
+    .aviso{margin-bottom:18px}
+  }
   .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--suave)}
   .tag.rojo{color:var(--rojo)}
   header{border-bottom:1px solid var(--linea);padding-bottom:20px;margin-bottom:24px;position:relative}
@@ -26,9 +39,17 @@
   h2{font-size:1.1rem;margin:0 0 10px}
   .card{background:var(--gris);border:1px solid var(--linea);border-radius:6px;padding:20px;margin-bottom:20px}
   .aviso{border-left:4px solid var(--rojo);background:#fff;border-top:1px solid var(--linea);border-right:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:12px 16px;font-size:.78rem;margin:0 0 22px;color:var(--texto)}
-  .aviso b{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rojo);display:block;margin-bottom:2px}
+  .aviso{padding:9px 16px;font-size:.72rem}
+  .aviso b{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rojo);margin-right:10px}
+  .confianza{background:var(--verde-bg);border:1px solid #BFE3C9;border-left:6px solid var(--verde);border-radius:4px;padding:12px 16px;margin-bottom:12px}
+  .confianza ul{list-style:none;margin:0;padding:0}
+  .confianza li{display:flex;gap:12px;align-items:flex-start;margin:8px 0;font-size:.85rem}
+  .confianza .ok{flex:none;width:26px;height:26px;border-radius:50%;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:.8rem;margin-top:2px}
+  .confianza li b{color:#14552a}
+  .confianza .pie{font-size:.72rem;color:#14552a;margin:8px 0 0;border-top:1px solid #BFE3C9;padding-top:8px}
+  mark.ok{background:#CDEFD6}
   label.tag{display:block;margin-bottom:8px}
-  textarea{width:100%;min-height:170px;resize:vertical;font:inherit;font-size:.95rem;color:var(--texto);background:#fff;border:1px solid var(--linea);border-radius:4px;padding:14px;line-height:1.5}
+  textarea{width:100%;min-height:240px;resize:vertical;font:inherit;font-size:.95rem;color:var(--texto);background:#fff;border:1px solid var(--linea);border-radius:4px;padding:14px;line-height:1.5}
   textarea:focus,button:focus-visible,summary:focus-visible{outline:3px solid rgba(227,6,19,.35);outline-offset:1px}
   .fila{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
   button{font:inherit;font-size:.85rem;cursor:pointer;border-radius:4px;padding:10px 18px;border:1px solid var(--texto);background:#fff;color:var(--texto)}
@@ -95,11 +116,11 @@
   </header>
 
   <div class="aviso" role="note">
-    <b>Aviso</b>
-    Prototipo basado en reglas con fines de investigación. No reemplaza verificar con la empresa. El texto no se envía a ningún servidor.
+    <b>Aviso</b>Prototipo basado en reglas con fines de investigación. No reemplaza verificar con la empresa. El texto no se envía a ningún servidor.
   </div>
 
-  <section class="card" aria-labelledby="t-entrada">
+  <div class="layout">
+  <section class="card entrada" aria-labelledby="t-entrada">
     <label class="tag" for="oferta" id="t-entrada">01 · Entrada — pega el texto de la oferta</label>
     <textarea id="oferta" placeholder="Pega aquí el texto de la oferta laboral o del mensaje que recibiste…"></textarea>
     <div class="fila">
@@ -112,10 +133,13 @@
         <button class="ej" type="button" data-ej="0">Oferta en redes</button>
         <button class="ej" type="button" data-ej="1">Mensaje de reclutadora</button>
         <button class="ej" type="button" data-ej="2">Oferta de prácticas</button>
+        <button class="ej" type="button" data-ej="3">Aviso genérico</button>
       </div>
     </div>
   </section>
 
+  <div class="panel">
+  <div id="vacio" class="vacio-panel"><span class="tag">02–04 · Resultado</span>Pega una oferta y pulsa “Analizar oferta”, o prueba uno de los ejemplos.</div>
   <section id="resultado" aria-live="polite">
     <div class="tag" style="margin-bottom:8px">02 · Clasificación</div>
     <div id="nivel"></div>
@@ -123,14 +147,18 @@
     <div class="tag" style="margin-bottom:8px">03 · Señales encontradas</div>
     <div id="senales"></div>
 
-    <div id="bloque-notas"><div class="tag" style="margin:16px 0 8px">04 · Notas informativas</div><div id="notas"></div></div>
+    <div id="bloque-confianza"><div class="tag" style="margin:16px 0 8px">Señales de confianza</div><div id="confianza"></div></div>
 
-    <div class="tag" style="margin:16px 0 8px">05 · Recomendación</div>
+    <div id="bloque-notas"><div class="tag" style="margin:16px 0 8px">Notas informativas</div><div id="notas"></div></div>
+
+    <div class="tag" style="margin:16px 0 8px">04 · Recomendación</div>
     <div class="reco"><span class="tag">Antes de postular</span><p id="reco"></p></div>
 
-    <div class="tag" style="margin-bottom:8px">Texto analizado (palabras detectadas resaltadas)</div>
-    <div class="texto-res" id="texto-res"></div>
+    <details class="res-texto" open><summary>Texto analizado · palabras detectadas resaltadas</summary>
+    <div class="texto-res" id="texto-res"></div></details>
   </section>
+  </div>
+  </div>
 
   <details class="como card" style="margin-top:24px">
     <summary>¿Cómo funciona?</summary>
@@ -146,6 +174,7 @@
       <li>Al menos 1 señal grave, o 2 o más señales medias → <b>Fraudulenta</b></li>
     </ul>
     <p style="font-size:.8rem;margin:10px 0 0">Las <b>notas informativas</b> (por ejemplo, contacto por WhatsApp junto a un contacto oficial) no suben el nivel de riesgo.</p>
+    <p style="font-size:.8rem;margin:10px 0 0">Las <b>señales de confianza</b> (correo con dominio de empresa, requisitos concretos, entrevista presencial u oficina con dirección, subvención o sueldo con monto razonable) se muestran con ✓ pero <b>no bajan</b> el nivel de riesgo: una estafa puede imitarlas.</p>
   </details>
 
   <footer>Prototipo basado en reglas con fines de investigación. No reemplaza verificar con la empresa. El texto no se envía a ningún servidor.</footer>
@@ -187,13 +216,58 @@
     return out;
   }
 
-  function tieneContactoOficial(norm) {
-    var m, r = new RegExp(CORREO.source, 'g');
+  // Oficina o dirección física (no cuenta “asistente de oficina”).
+  var RE_DIRECCION = /\b(?:nuestras? oficinas?|oficinas? (?:de|en|ubicad\w+)|sede|avenida|jiron|calle|direccion|local principal)\b|\b(?:av|jr)\.\s/;
+
+  function correosEmpresa(norm) {
+    var out = [], m, r = new RegExp(CORREO.source, 'g');
     while ((m = r.exec(norm)) !== null) {
-      if (!DOMINIOS_LIBRES.test(m[1])) return true;
+      if (!DOMINIOS_LIBRES.test(m[1])) out.push([m.index, m.index + m[0].length]);
     }
-    return /\b(oficinas?|sede|av\.|avenida|jr\.|jiron|calle|direccion|local principal)\b/.test(norm);
+    return out;
   }
+
+  function tieneContactoOficial(norm) {
+    return correosEmpresa(norm).length > 0 || RE_DIRECCION.test(norm);
+  }
+
+  // Señales de confianza: se muestran, pero NO cambian el nivel de riesgo.
+  var CONFIANZA = [
+    {
+      id: 'correo', nombre: 'Correo con dominio de empresa',
+      explicacion: 'Da un correo corporativo (no Gmail, Hotmail ni Outlook) que puedes comparar con la web oficial.',
+      detectar: function (n) { return correosEmpresa(n); }
+    },
+    {
+      id: 'requisitos', nombre: 'Requisitos concretos',
+      explicacion: 'Indica ciclo, carrera u horas de dedicación, como suelen hacer las ofertas reales.',
+      detectar: function (n) {
+        var r = [].concat(
+          rangos(n, /\d[^a-z\d\n]{0,4}(?:er|do|to|vo|no|mo)?\s*ciclo\b/),
+          rangos(n, /\bultimos? ciclos?\b/),
+          rangos(n, /\b\d+\s*horas\b/)
+        );
+        if (/requisit|estudiante|egresad|bachiller|carrera/.test(n)) {
+          r = r.concat(rangos(n, /\b(?:administracion|ingenieria|contabilidad|economia|derecho|psicologia|marketing|comunicaciones|computacion|sistemas|enfermeria|educacion)\b/));
+        }
+        return r;
+      }
+    },
+    {
+      id: 'presencial', nombre: 'Entrevista presencial u oficina con dirección',
+      explicacion: 'Menciona una entrevista presencial o una oficina o dirección física que se puede verificar.',
+      detectar: function (n) { return rangos(n, /\bentrevista presencial\b|\bpresencial\b/).concat(rangos(n, RE_DIRECCION)); }
+    },
+    {
+      id: 'monto', nombre: 'Subvención o sueldo con monto razonable',
+      explicacion: 'Indica una subvención o sueldo concreto y acorde al puesto (menos de S/ 2 500).',
+      detectar: function (n) {
+        return rangos(n, new RegExp('\\b(?:subvencion|sueldo|remuneracion|salario)\\b[^.\\n]{0,15}?' + AMT), function (t) {
+          var v = monto(t); return v >= 500 && v < 2500;
+        });
+      }
+    }
+  ];
 
   var REGLAS = [
     {
@@ -311,6 +385,17 @@
       }
     });
 
+    var confianza = [];
+    CONFIANZA.forEach(function (c) {
+      var rs = c.detectar(n);
+      if (rs.length) {
+        confianza.push({ id: c.id, nombre: c.nombre, explicacion: c.explicacion });
+        rs.forEach(function (x) {
+          resaltes.push({ ini: N.mapa[x[0]], fin: N.mapa[x[1] - 1] + 1, gravedad: 'ok' });
+        });
+      }
+    });
+
     var notas = [];
     if (/\bwhatsapp\b/.test(n) && tieneContactoOficial(n)) {
       notas.push('Contacto por WhatsApp: es común en ofertas reales. Verifica que el número sea de la empresa.');
@@ -323,10 +408,10 @@
     else if (senales.length >= 1) nivel = 'sospechosa';   // 1 media, o solo leves
     else nivel = 'legitima';
 
-    return { nivel: nivel, senales: senales, notas: notas, resaltes: resaltes };
+    return { nivel: nivel, senales: senales, confianza: confianza, notas: notas, resaltes: resaltes };
   }
 
-  root.Detector = { analizar: analizar, REGLAS: REGLAS, normalizar: normalizar };
+  root.Detector = { analizar: analizar, REGLAS: REGLAS, CONFIANZA: CONFIANZA, normalizar: normalizar };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.Detector;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -338,7 +423,8 @@
   var EJEMPLOS = [
     '¡URGENTE! Asistente de oficina. S/ 3500, sin experiencia. Inscripción: S/ 50 (capacitación). Interesados escribir al interno.',
     'Practicante de Marketing Digital – Grupo Retail Perú. Modalidad híbrida, subvención de S/ 1500. Requisitos: estudiante desde 6.º ciclo de Marketing, Comunicaciones o afines. Hola, soy Andrea, del equipo de Talento. Revisamos tu perfil y pasaste a la siguiente etapa. Por políticas internas, las entrevistas se realizan en nuestra plataforma propia: descárgala desde el enlace que te enviaré y confírmame tu horario.',
-    'Practicante de Atención al Cliente – Seguros del Pacífico Sur. Inicio inmediato. Subvención: S/ 1300 + movilidad. Requisitos: estudiante desde 5.º ciclo de Administración, Ingeniería o afines; disponibilidad de 30 horas semanales. Envía tu CV a seleccion@pacificosurseguros.com.pe o escríbenos por WhatsApp para coordinar tu entrevista presencial en nuestras oficinas de San Isidro.'
+    'Practicante de Atención al Cliente – Seguros del Pacífico Sur. Inicio inmediato. Subvención: S/ 1300 + movilidad. Requisitos: estudiante desde 5.º ciclo de Administración, Ingeniería o afines; disponibilidad de 30 horas semanales. Envía tu CV a seleccion@pacificosurseguros.com.pe o escríbenos por WhatsApp para coordinar tu entrevista presencial en nuestras oficinas de San Isidro.',
+    'Se busca personal para atención al público. ¡Urgente, cupos limitados! Buen sueldo. Más información por interno.'
   ];
   var NIVELES = {
     legitima:    { nom: 'Legítima',    ico: '✓', det: 'No se encontraron señales de alerta en el texto.' },
@@ -356,12 +442,12 @@
   function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
   function resaltar(texto, resaltes) {
-    var peso = { grave: 3, media: 2, leve: 1 };
+    var peso = { grave: 3, media: 2, leve: 1, ok: 0.5 };
     var car = new Array(texto.length).fill(0);
     resaltes.forEach(function (r) {
       for (var i = r.ini; i < r.fin; i++) if (peso[r.gravedad] > car[i]) car[i] = peso[r.gravedad];
     });
-    var nom = { 3: 'grave', 2: 'media', 1: 'leve' };
+    var nom = { 3: 'grave', 2: 'media', 1: 'leve', 0.5: 'ok' };
     var out = '', i = 0;
     while (i < texto.length) {
       var p = car[i], j = i;
@@ -384,6 +470,11 @@
         '</span>' + esc(s.nombre) + '</h3><p>' + esc(s.explicacion) + '</p><div class="fuente">FUENTE · ' + esc(s.fuente) + '</div></div>';
     }).join('') : '<p class="vacio">No se detectaron señales de riesgo.</p>';
 
+    $('bloque-confianza').style.display = res.confianza.length ? '' : 'none';
+    $('confianza').innerHTML = res.confianza.length ? '<div class="confianza"><ul>' + res.confianza.map(function (c) {
+      return '<li><span class="ok" aria-hidden="true">✓</span><span><b>' + esc(c.nombre) + '.</b> ' + esc(c.explicacion) + '</span></li>';
+    }).join('') + '</ul><p class="pie">No cambian el nivel de riesgo: una estafa también puede imitarlas.</p></div>' : '';
+
     $('bloque-notas').style.display = res.notas.length ? '' : 'none';
     $('notas').innerHTML = res.notas.map(function (t) {
       return '<div class="nota"><span class="tag">Nota informativa · no sube el riesgo</span>' + esc(t) + '</div>';
@@ -391,6 +482,7 @@
 
     $('reco').textContent = RECO[res.nivel];
     $('texto-res').innerHTML = resaltar(texto, res.resaltes);
+    $('vacio').style.display = 'none';
     $('resultado').style.display = 'block';
   }
 
@@ -398,7 +490,9 @@
     var texto = $('oferta').value;
     if (!texto.trim()) { $('oferta').focus(); return; }
     mostrar(window.Detector.analizar(texto), texto);
-    $('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!window.matchMedia('(min-width:1000px)').matches) {
+      $('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   // Tabla “¿Cómo funciona?”
@@ -408,12 +502,20 @@
 
   $('btn-analizar').addEventListener('click', analizar);
   $('btn-limpiar').addEventListener('click', function () {
-    $('oferta').value = ''; $('resultado').style.display = 'none'; $('oferta').focus();
+    $('oferta').value = ''; $('oferta').style.height = ''; $('resultado').style.display = 'none'; $('vacio').style.display = ''; $('oferta').focus();
   });
+  // El cuadro crece con el texto para que la oferta completa se vea sin scroll interno.
+  function ajustarAltura() {
+    var t = $('oferta');
+    t.style.height = 'auto';
+    t.style.height = (t.scrollHeight + 2) + 'px';
+  }
+  $('oferta').addEventListener('input', ajustarAltura);
   $('oferta').addEventListener('keydown', function (e) { if (e.ctrlKey && e.key === 'Enter') analizar(); });
   Array.prototype.forEach.call(document.querySelectorAll('button.ej'), function (b) {
     b.addEventListener('click', function () {
       $('oferta').value = EJEMPLOS[+b.getAttribute('data-ej')];
+      ajustarAltura();
       analizar();
     });
   });
