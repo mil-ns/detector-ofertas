@@ -1,2 +1,423 @@
-<h1>Detector de ofertas laborales fraudulentas</h1>
-<p>Demo disponible el 24 de noviembre de 2026.</p>
+<!DOCTYPE html>
+<html lang="es-PE">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detector de ofertas laborales fraudulentas</title>
+<meta name="description" content="Prototipo basado en reglas que analiza el texto de una oferta laboral y explica sus señales de riesgo. Proyecto de investigación UPC 2026.">
+<style>
+  :root{
+    --rojo:#E30613; --texto:#1D1D1F; --gris:#F4F4F5; --linea:#D9D9DD; --suave:#6B6B72;
+    --verde:#1E8E3E; --verde-bg:#E7F5EB;
+    --ambar:#B26A00; --ambar-bg:#FFF3DC;
+    --rojo-bg:#FDE8EA;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  *{box-sizing:border-box}
+  html{font-size:20px}
+  body{margin:0;background:#fff;color:var(--texto);font-family:Arial,"Helvetica Neue",system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 24px 56px}
+  .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--suave)}
+  .tag.rojo{color:var(--rojo)}
+  header{border-bottom:1px solid var(--linea);padding-bottom:20px;margin-bottom:24px;position:relative}
+  header::before{content:"";display:block;width:56px;height:4px;background:var(--rojo);margin-bottom:16px}
+  h1{font-size:2rem;line-height:1.15;margin:8px 0 8px;letter-spacing:-.01em}
+  .sub{margin:0;color:var(--suave);font-size:.85rem}
+  h2{font-size:1.1rem;margin:0 0 10px}
+  .card{background:var(--gris);border:1px solid var(--linea);border-radius:6px;padding:20px;margin-bottom:20px}
+  .aviso{border-left:4px solid var(--rojo);background:#fff;border-top:1px solid var(--linea);border-right:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:12px 16px;font-size:.78rem;margin:0 0 22px;color:var(--texto)}
+  .aviso b{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rojo);display:block;margin-bottom:2px}
+  label.tag{display:block;margin-bottom:8px}
+  textarea{width:100%;min-height:170px;resize:vertical;font:inherit;font-size:.95rem;color:var(--texto);background:#fff;border:1px solid var(--linea);border-radius:4px;padding:14px;line-height:1.5}
+  textarea:focus,button:focus-visible,summary:focus-visible{outline:3px solid rgba(227,6,19,.35);outline-offset:1px}
+  .fila{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
+  button{font:inherit;font-size:.85rem;cursor:pointer;border-radius:4px;padding:10px 18px;border:1px solid var(--texto);background:#fff;color:var(--texto)}
+  button:hover{background:#ececee}
+  button.primario{background:var(--rojo);border-color:var(--rojo);color:#fff;font-weight:bold;padding:12px 28px}
+  button.primario:hover{background:#b9050f}
+  .ejemplos{margin-top:18px;padding-top:16px;border-top:1px dashed var(--linea)}
+  .ejemplos .fila{margin-top:8px}
+  button.ej{font-size:.78rem;border-color:var(--linea)}
+  button.ej:hover{border-color:var(--rojo);color:var(--rojo)}
+  #resultado{display:none}
+  .nivel{display:flex;align-items:center;gap:20px;border-radius:6px;padding:20px 24px;margin-bottom:20px;border:2px solid}
+  .nivel .ico{flex:none;width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:bold;color:#fff}
+  .nivel .nom{font-size:2rem;font-weight:bold;line-height:1.1}
+  .nivel .det{font-size:.8rem;margin-top:4px}
+  .nivel.legitima{background:var(--verde-bg);border-color:var(--verde);color:#14552a}
+  .nivel.legitima .ico{background:var(--verde)}
+  .nivel.sospechosa{background:var(--ambar-bg);border-color:var(--ambar);color:#6e4200}
+  .nivel.sospechosa .ico{background:var(--ambar)}
+  .nivel.fraudulenta{background:var(--rojo-bg);border-color:var(--rojo);color:#8a030c}
+  .nivel.fraudulenta .ico{background:var(--rojo)}
+  .senal{background:#fff;border:1px solid var(--linea);border-left:6px solid;border-radius:4px;padding:14px 16px;margin-bottom:12px}
+  .senal.grave{border-left-color:var(--rojo)}
+  .senal.media{border-left-color:var(--ambar)}
+  .senal.leve{border-left-color:#C9A227}
+  .senal h3{margin:0 0 4px;font-size:.95rem}
+  .senal p{margin:0 0 8px;font-size:.85rem}
+  .senal .fuente{font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--suave)}
+  .grav{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border-radius:3px;color:#fff;margin-right:8px;vertical-align:middle}
+  .grav.grave{background:var(--rojo)} .grav.media{background:var(--ambar)} .grav.leve{background:#9a7b0a}
+  .nota{background:#EAF2FB;border:1px solid #B9D3EE;border-left:6px solid #2F6FB3;border-radius:4px;padding:14px 16px;margin-bottom:12px;font-size:.85rem}
+  .nota .tag{color:#2F6FB3;display:block;margin-bottom:2px}
+  .reco{background:var(--texto);color:#fff;border-radius:6px;padding:20px 24px;margin-bottom:20px}
+  .reco .tag{color:#ff6b73;display:block;margin-bottom:6px}
+  .reco p{margin:0;font-size:.95rem}
+  .texto-res{background:#fff;border:1px solid var(--linea);border-radius:4px;padding:14px;font-size:.85rem;white-space:pre-wrap;word-wrap:break-word}
+  mark{border-radius:3px;padding:0 2px;color:inherit}
+  mark.grave{background:#FFC9CD} mark.media{background:#FFDDA6} mark.leve{background:#F5E7A3}
+  .vacio{color:var(--suave);font-size:.85rem;margin:0}
+  details.como{margin-top:8px}
+  details.como summary{cursor:pointer;font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rojo);padding:8px 0}
+  .tabla{width:100%;border-collapse:collapse;font-size:.72rem;margin-top:10px;background:#fff}
+  .tabla th,.tabla td{border:1px solid var(--linea);padding:8px 10px;text-align:left;vertical-align:top}
+  .tabla th{background:var(--gris);font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase}
+  .niveles li{margin-bottom:4px}
+  footer{margin-top:30px;border-top:1px solid var(--linea);padding-top:14px;font-size:.7rem;color:var(--suave)}
+  @media (max-width:640px){
+    html{font-size:17px}
+    .wrap{padding:18px 14px 40px}
+    h1{font-size:1.55rem}
+    .nivel{flex-direction:column;text-align:center;gap:10px}
+    .nivel .nom{font-size:1.6rem}
+    .tabla{display:block;overflow-x:auto}
+    button.primario{width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="tag rojo">Prototipo · Call For Projects 2026</div>
+    <h1>Detector de ofertas laborales fraudulentas</h1>
+    <p class="sub">Prototipo de reglas · Proyecto de investigación UPC 2026 · Milene Vasquez Quispe</p>
+  </header>
+
+  <div class="aviso" role="note">
+    <b>Aviso</b>
+    Prototipo basado en reglas con fines de investigación. No reemplaza verificar con la empresa. El texto no se envía a ningún servidor.
+  </div>
+
+  <section class="card" aria-labelledby="t-entrada">
+    <label class="tag" for="oferta" id="t-entrada">01 · Entrada — pega el texto de la oferta</label>
+    <textarea id="oferta" placeholder="Pega aquí el texto de la oferta laboral o del mensaje que recibiste…"></textarea>
+    <div class="fila">
+      <button class="primario" id="btn-analizar" type="button">Analizar oferta</button>
+      <button id="btn-limpiar" type="button">Limpiar</button>
+    </div>
+    <div class="ejemplos">
+      <span class="tag">Probar ejemplo (empresas ficticias)</span>
+      <div class="fila">
+        <button class="ej" type="button" data-ej="0">Oferta en redes</button>
+        <button class="ej" type="button" data-ej="1">Mensaje de reclutadora</button>
+        <button class="ej" type="button" data-ej="2">Oferta de prácticas</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="resultado" aria-live="polite">
+    <div class="tag" style="margin-bottom:8px">02 · Clasificación</div>
+    <div id="nivel"></div>
+
+    <div class="tag" style="margin-bottom:8px">03 · Señales encontradas</div>
+    <div id="senales"></div>
+
+    <div id="bloque-notas"><div class="tag" style="margin:16px 0 8px">04 · Notas informativas</div><div id="notas"></div></div>
+
+    <div class="tag" style="margin:16px 0 8px">05 · Recomendación</div>
+    <div class="reco"><span class="tag">Antes de postular</span><p id="reco"></p></div>
+
+    <div class="tag" style="margin-bottom:8px">Texto analizado (palabras detectadas resaltadas)</div>
+    <div class="texto-res" id="texto-res"></div>
+  </section>
+
+  <details class="como card" style="margin-top:24px">
+    <summary>¿Cómo funciona?</summary>
+    <p style="font-size:.85rem;margin:6px 0">Es un sistema de <b>reglas</b> (sin aprendizaje automático, sin OCR, sin login). Normaliza el texto (ignora mayúsculas y tildes), busca estas señales y clasifica según su gravedad. No verifica si un reclutador trabaja realmente en la empresa.</p>
+    <table class="tabla" id="tabla-reglas">
+      <thead><tr><th>Señal</th><th>Gravedad</th><th>Fuente</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="tag" style="margin:16px 0 6px">Nivel de riesgo</p>
+    <ul class="niveles" style="font-size:.8rem;margin:0;padding-left:20px">
+      <li>0 señales → <b>Legítima</b></li>
+      <li>Solo señales leves, o 1 señal media (sin graves) → <b>Sospechosa</b></li>
+      <li>Al menos 1 señal grave, o 2 o más señales medias → <b>Fraudulenta</b></li>
+    </ul>
+    <p style="font-size:.8rem;margin:10px 0 0">Las <b>notas informativas</b> (por ejemplo, contacto por WhatsApp junto a un contacto oficial) no suben el nivel de riesgo.</p>
+  </details>
+
+  <footer>Prototipo basado en reglas con fines de investigación. No reemplaza verificar con la empresa. El texto no se envía a ningún servidor.</footer>
+</div>
+
+<!-- ===== Motor de reglas (puro, sin DOM) ===== -->
+<script id="motor">
+(function (root) {
+  'use strict';
+
+  // Normaliza (minúsculas, sin tildes) conservando el mapa hacia el texto original para poder resaltar.
+  function normalizar(orig) {
+    var norm = '', mapa = [];
+    for (var i = 0; i < orig.length; i++) {
+      var c = orig[i].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      for (var j = 0; j < c.length; j++) { norm += c[j]; mapa.push(i); }
+    }
+    return { norm: norm, mapa: mapa };
+  }
+
+  var AMT = 's\\/\\.?\\s*\\d[\\d.,]*';
+  var KW_COBRO = '(?:inscripcion|capacitacion|uniforme|tramite|examen medico|certificado medico)';
+  var EXCLUYE_COBRO = /subvencion|sueldo|remuneracion|salario|gratuit|sin costo|a cargo de la empresa|asume la empresa/;
+  var CORREO = /[a-z0-9._%+-]+@([a-z0-9-]+(?:\.[a-z0-9-]+)+)/g;
+  var DOMINIOS_LIBRES = /^(gmail|hotmail|outlook|yahoo|live|icloud|proton|protonmail|msn)\./;
+
+  function monto(txt) {
+    var m = txt.match(/\d[\d.,]*/);
+    if (!m) return 0;
+    return parseFloat(m[0].replace(/[.,](?=\d{3}(?!\d))/g, '').replace(',', '.')) || 0;
+  }
+
+  function rangos(norm, re, filtro) {
+    var out = [], m, r = new RegExp(re.source, 'g');
+    while ((m = r.exec(norm)) !== null) {
+      if (m[0].length === 0) { r.lastIndex++; continue; }
+      if (!filtro || filtro(m[0])) out.push([m.index, m.index + m[0].length]);
+    }
+    return out;
+  }
+
+  function tieneContactoOficial(norm) {
+    var m, r = new RegExp(CORREO.source, 'g');
+    while ((m = r.exec(norm)) !== null) {
+      if (!DOMINIOS_LIBRES.test(m[1])) return true;
+    }
+    return /\b(oficinas?|sede|av\.|avenida|jr\.|jiron|calle|direccion|local principal)\b/.test(norm);
+  }
+
+  var REGLAS = [
+    {
+      id: 'cobro', nombre: 'Cobro previo', gravedad: 'grave',
+      explicacion: 'La oferta pide dinero (inscripción, capacitación, uniforme, trámite, examen médico o un pago “reembolsable”) antes de contratar. Un empleador real no cobra por darte trabajo, y el examen médico ocupacional lo asume el empleador.',
+      fuente: 'Sunafil; Ley 29783 (el empleador asume el examen médico ocupacional)',
+      resumen: 'Inscripción, capacitación, uniforme, trámite, examen médico, “reembolsable” o pagar un monto en S/',
+      detectar: function (n) {
+        var r = [];
+        var a = rangos(n, new RegExp(KW_COBRO + '[^.\\n]{0,40}?' + AMT), function (t) { return !EXCLUYE_COBRO.test(t); });
+        var b = rangos(n, new RegExp(AMT + '[^.\\n]{0,40}?' + KW_COBRO), function (t) { return !EXCLUYE_COBRO.test(t); });
+        var c = rangos(n, /\breembolsable\b/);
+        var d = rangos(n, new RegExp('\\b(?:pagar|pago|abonar|depositar|cancelar)\\b[^.\\n]{0,40}?' + AMT), function (t) { return !EXCLUYE_COBRO.test(t); });
+        return r.concat(a, b, c, d);
+      }
+    },
+    {
+      id: 'app', nombre: 'Descargar app o enlace para la entrevista', gravedad: 'grave',
+      explicacion: 'Te piden descargar una aplicación o usar una “plataforma propia” para entrevistarte, o rechazan Meet, Teams o Zoom. Es una táctica usada para robar datos o instalar software malicioso.',
+      fuente: 'Caso real en LinkedIn (Chavez Napuri, 2026)',
+      resumen: 'Descargar app/plataforma/aplicación, “plataforma propia”, rechazo de Meet, Teams o Zoom',
+      detectar: function (n) {
+        return [].concat(
+          rangos(n, /\bdescarg\w*\b[^.\n]{0,50}?\b(?:app|aplicacion|plataforma)\b/),
+          rangos(n, /\b(?:app|aplicacion|plataforma)\b[^.\n]{0,40}?\bdescarg\w*/),
+          rangos(n, /\bplataforma propia\b/),
+          rangos(n, /(?:no (?:usamos|utilizamos|aceptamos|realizamos|se usa|se utiliza)|rechaz\w+|en lugar de|sin usar)[^.\n]{0,30}?\b(?:meet|teams|zoom)\b/)
+        );
+      }
+    },
+    {
+      id: 'datos', nombre: 'Datos sensibles al inicio', gravedad: 'grave',
+      explicacion: 'Piden DNI, selfie, cuenta bancaria, número de tarjeta o claves desde el primer contacto. Esos datos no se entregan antes de una contratación formal verificada.',
+      fuente: 'Buenas prácticas de seguridad',
+      resumen: 'DNI (al pedir que lo envíes), selfie, foto del DNI, cuenta bancaria, número de tarjeta, clave',
+      detectar: function (n) {
+        return [].concat(
+          rangos(n, /\b(?:selfie|foto (?:de(?:l)? )?(?:tu )?dni|cuenta bancaria|numero de (?:tarjeta|cuenta)|tarjeta de (?:credito|debito)|clave|contrasena|cci)\b/),
+          rangos(n, /\b(?:envia\w*|enviar|adjunt\w+|manda\w*|comparte\w*|brinda\w*|proporciona\w*|necesit\w+|solicit\w+|registra\w*|ingresa\w*|foto)\b[^.\n]{0,40}?\bdni\b/),
+          rangos(n, /\bdni\b[^.\n]{0,20}?\b(?:por (?:whatsapp|interno|correo)|para (?:el )?registro)\b/)
+        );
+      }
+    },
+    {
+      id: 'sueldo', nombre: 'Sueldo alto sin experiencia', gravedad: 'media',
+      explicacion: 'Promete un sueldo muy alto (desde S/ 2 500) o “atractivo” sin pedir experiencia. Es un gancho típico de ofertas falsas.',
+      fuente: 'Alerta de Sunafil (El Peruano, 2026b); criterio del Mininter (Bonafon et al., 2025)',
+      resumen: 'Monto ≥ S/ 2500 (o “sueldo atractivo/alto”) y “sin experiencia”',
+      detectar: function (n) {
+        var alto = rangos(n, new RegExp(AMT), function (t) { return monto(t) >= 2500; })
+          .concat(rangos(n, /\bsueldo (?:muy )?(?:atractivo|alto)\b/));
+        var sinexp = rangos(n, /\b(?:sin experiencia|no se requiere experiencia|no requiere experiencia|no necesitas experiencia|no es necesaria experiencia)\b/);
+        return (alto.length && sinexp.length) ? alto.concat(sinexp) : [];
+      }
+    },
+    {
+      id: 'contacto', nombre: 'Contacto solo por interno, WhatsApp o formulario genérico', gravedad: 'media',
+      explicacion: 'El único canal de contacto es “el interno”, un número suelto o un formulario genérico, sin correo corporativo ni dirección de la empresa. Dificulta comprobar quién está detrás.',
+      fuente: 'Criterio del Mininter (Bonafon et al., 2025)',
+      resumen: '“Escribir al interno”, forms.gle, o solo un número/WhatsApp sin correo corporativo ni dirección',
+      detectar: function (n) {
+        var r = [].concat(
+          rangos(n, /\b(?:al|por|x|via|escrib\w+ al)\s+(?:el\s+)?interno\b/),
+          rangos(n, /forms\.gle\S*|docs\.google\.com\/forms\S*/)
+        );
+        if (!tieneContactoOficial(n)) {
+          r = r.concat(rangos(n, /\b9\d{2}[\s-]?\d{3}[\s-]?\d{3}\b/), rangos(n, /\bwhatsapp\b/));
+        }
+        return r;
+      }
+    },
+    {
+      id: 'nosolicitado', nombre: 'Contacto no solicitado', gravedad: 'media',
+      explicacion: 'Te escriben diciendo que ya pasaste una etapa o fuiste preseleccionado/a sin que hayas postulado. Los estafadores usan este gancho para generar confianza.',
+      fuente: 'Caso real en LinkedIn (Chavez Napuri, 2026)',
+      resumen: '“Revisamos tu perfil”, “pasaste a la siguiente etapa”, “fuiste preseleccionado/a”',
+      detectar: function (n) {
+        return rangos(n, /\b(?:revisamos tu perfil|revise tu perfil|pasaste a la siguiente etapa|fuiste preseleccionad[oa]|has sido preseleccionad[oa]|has sido seleccionad[oa])\b/);
+      }
+    },
+    {
+      id: 'urgencia', nombre: 'Urgencia o presión', gravedad: 'leve',
+      explicacion: 'Usa urgencia o escasez (“urgente”, “cupos limitados”, “hoy mismo”) para que decidas sin verificar.',
+      fuente: 'LinkedIn (2026)',
+      resumen: 'Urgente, cupos limitados, hoy mismo, últimos cupos',
+      detectar: function (n) {
+        return rangos(n, /\b(?:urgente|cupos limitados|vacantes limitadas|hoy mismo|ultimos cupos|ultimas vacantes|solo por hoy)\b/);
+      }
+    },
+    {
+      id: 'poca', nombre: 'Poca información del puesto', gravedad: 'leve',
+      explicacion: 'El texto es muy corto y no indica requisitos ni funciones. Las ofertas reales suelen detallar qué se hará y qué se pide.',
+      fuente: 'Criterio del Mininter (Bonafon et al., 2025)',
+      resumen: 'Texto corto (menos de 25 palabras) y sin requisitos ni funciones',
+      detectar: function (n) {
+        var palabras = (n.match(/[a-z0-9]+/g) || []).length;
+        var detalle = /\b(?:requisitos?|funciones|responsabilidades|se requiere|perfil|conocimientos?|estudiante|egresad[oa]|bachiller|titulad[oa])\b|experiencia (?:en|previa)/.test(n);
+        return (palabras > 0 && palabras < 25 && !detalle) ? [[0, n.length, 'global']] : [];
+      }
+    }
+  ];
+
+  function analizar(texto) {
+    var N = normalizar(texto), n = N.norm;
+    var senales = [], resaltes = [];
+    REGLAS.forEach(function (r) {
+      var rs = r.detectar(n);
+      if (rs.length) {
+        senales.push({ id: r.id, nombre: r.nombre, gravedad: r.gravedad, explicacion: r.explicacion, fuente: r.fuente });
+        rs.forEach(function (x) {
+          if (x[2] === 'global') return; // la señal de “poca información” no resalta nada
+          var ini = N.mapa[x[0]], fin = N.mapa[x[1] - 1] + 1;
+          resaltes.push({ ini: ini, fin: fin, gravedad: r.gravedad });
+        });
+      }
+    });
+
+    var notas = [];
+    if (/\bwhatsapp\b/.test(n) && tieneContactoOficial(n)) {
+      notas.push('Contacto por WhatsApp: es común en ofertas reales. Verifica que el número sea de la empresa.');
+    }
+
+    var g = senales.filter(function (s) { return s.gravedad === 'grave'; }).length;
+    var m = senales.filter(function (s) { return s.gravedad === 'media'; }).length;
+    var nivel;
+    if (g >= 1 || m >= 2) nivel = 'fraudulenta';
+    else if (senales.length >= 1) nivel = 'sospechosa';   // 1 media, o solo leves
+    else nivel = 'legitima';
+
+    return { nivel: nivel, senales: senales, notas: notas, resaltes: resaltes };
+  }
+
+  root.Detector = { analizar: analizar, REGLAS: REGLAS, normalizar: normalizar };
+  if (typeof module !== 'undefined' && module.exports) module.exports = root.Detector;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+
+<!-- ===== Interfaz ===== -->
+<script id="interfaz">
+(function () {
+  'use strict';
+  var EJEMPLOS = [
+    '¡URGENTE! Asistente de oficina. S/ 3500, sin experiencia. Inscripción: S/ 50 (capacitación). Interesados escribir al interno.',
+    'Practicante de Marketing Digital – Grupo Retail Perú. Modalidad híbrida, subvención de S/ 1500. Requisitos: estudiante desde 6.º ciclo de Marketing, Comunicaciones o afines. Hola, soy Andrea, del equipo de Talento. Revisamos tu perfil y pasaste a la siguiente etapa. Por políticas internas, las entrevistas se realizan en nuestra plataforma propia: descárgala desde el enlace que te enviaré y confírmame tu horario.',
+    'Practicante de Atención al Cliente – Seguros del Pacífico Sur. Inicio inmediato. Subvención: S/ 1300 + movilidad. Requisitos: estudiante desde 5.º ciclo de Administración, Ingeniería o afines; disponibilidad de 30 horas semanales. Envía tu CV a seleccion@pacificosurseguros.com.pe o escríbenos por WhatsApp para coordinar tu entrevista presencial en nuestras oficinas de San Isidro.'
+  ];
+  var NIVELES = {
+    legitima:    { nom: 'Legítima',    ico: '✓', det: 'No se encontraron señales de alerta en el texto.' },
+    sospechosa:  { nom: 'Sospechosa',  ico: '!', det: 'Hay señales que conviene verificar antes de postular.' },
+    fraudulenta: { nom: 'Fraudulenta', ico: '✕', det: 'Presenta señales graves o varias señales medias de fraude.' }
+  };
+  var RECO = {
+    legitima: 'No vimos señales de fraude, pero esta herramienta no lo garantiza: confirma la empresa en su web o página oficial y recuerda que nunca debes pagar para postular.',
+    sospechosa: 'Verifica la empresa y a quien te contacta por sus canales oficiales (web, correo corporativo, LinkedIn de la empresa) antes de enviar datos o responder. No pagues ni entregues documentos por ahora.',
+    fraudulenta: 'No postules, no pagues ni envíes documentos o datos personales. Verifica directamente con la empresa por sus canales oficiales y, si ya compartiste información o dinero, repórtalo a la plataforma donde viste la oferta y a las autoridades.'
+  };
+  var ETQ = { grave: 'Grave', media: 'Media', leve: 'Leve' };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  function resaltar(texto, resaltes) {
+    var peso = { grave: 3, media: 2, leve: 1 };
+    var car = new Array(texto.length).fill(0);
+    resaltes.forEach(function (r) {
+      for (var i = r.ini; i < r.fin; i++) if (peso[r.gravedad] > car[i]) car[i] = peso[r.gravedad];
+    });
+    var nom = { 3: 'grave', 2: 'media', 1: 'leve' };
+    var out = '', i = 0;
+    while (i < texto.length) {
+      var p = car[i], j = i;
+      while (j < texto.length && car[j] === p) j++;
+      var tr = esc(texto.slice(i, j));
+      out += p ? '<mark class="' + nom[p] + '">' + tr + '</mark>' : tr;
+      i = j;
+    }
+    return out;
+  }
+
+  function mostrar(res, texto) {
+    var L = NIVELES[res.nivel];
+    $('nivel').innerHTML = '<div class="nivel ' + res.nivel + '"><div class="ico" aria-hidden="true">' + L.ico +
+      '</div><div><div class="tag" style="color:inherit;opacity:.8">Nivel de riesgo</div><div class="nom">' + L.nom +
+      '</div><div class="det">' + L.det + '</div></div></div>';
+
+    $('senales').innerHTML = res.senales.length ? res.senales.map(function (s) {
+      return '<div class="senal ' + s.gravedad + '"><h3><span class="grav ' + s.gravedad + '">' + ETQ[s.gravedad] +
+        '</span>' + esc(s.nombre) + '</h3><p>' + esc(s.explicacion) + '</p><div class="fuente">FUENTE · ' + esc(s.fuente) + '</div></div>';
+    }).join('') : '<p class="vacio">No se detectaron señales de riesgo.</p>';
+
+    $('bloque-notas').style.display = res.notas.length ? '' : 'none';
+    $('notas').innerHTML = res.notas.map(function (t) {
+      return '<div class="nota"><span class="tag">Nota informativa · no sube el riesgo</span>' + esc(t) + '</div>';
+    }).join('');
+
+    $('reco').textContent = RECO[res.nivel];
+    $('texto-res').innerHTML = resaltar(texto, res.resaltes);
+    $('resultado').style.display = 'block';
+  }
+
+  function analizar() {
+    var texto = $('oferta').value;
+    if (!texto.trim()) { $('oferta').focus(); return; }
+    mostrar(window.Detector.analizar(texto), texto);
+    $('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Tabla “¿Cómo funciona?”
+  $('tabla-reglas').querySelector('tbody').innerHTML = window.Detector.REGLAS.map(function (r) {
+    return '<tr><td><b>' + esc(r.nombre) + '</b><br>' + esc(r.resumen) + '</td><td>' + ETQ[r.gravedad] + '</td><td>' + esc(r.fuente) + '</td></tr>';
+  }).join('');
+
+  $('btn-analizar').addEventListener('click', analizar);
+  $('btn-limpiar').addEventListener('click', function () {
+    $('oferta').value = ''; $('resultado').style.display = 'none'; $('oferta').focus();
+  });
+  $('oferta').addEventListener('keydown', function (e) { if (e.ctrlKey && e.key === 'Enter') analizar(); });
+  Array.prototype.forEach.call(document.querySelectorAll('button.ej'), function (b) {
+    b.addEventListener('click', function () {
+      $('oferta').value = EJEMPLOS[+b.getAttribute('data-ej')];
+      analizar();
+    });
+  });
+})();
+</script>
+</body>
+</html>
